@@ -1,36 +1,35 @@
-name: Executar Automacao Amazon
+
+name: Buscar Ofertas e Publicar
 
 on:
   schedule:
-    # Executa todos os dias às 09:00 UTC (ajuste conforme necessário)
-    - cron: '0 9 * * *'
-  workflow_dispatch: # Permite rodar o script manualmente pelo GitHub
+    - cron: '0 */6 * * *' # Executa a cada 6 horas
+  workflow_dispatch:
 
 jobs:
-  build:
+  run-bot:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Baixar código do repositório
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Configurar Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      - name: Instalar Dependências
-        run: |
-          python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Instalar bibliotecas
+        run: pip install requests
 
-      - name: Executar Script de Automação
-        run: python seu_script.py
+      - name: Executar Automação
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python script_ofertas.py
 
-      - name: Salvar alterações no repositório (opcional)
+      - name: Atualizar repositório (Landing Page)
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add .
-          git commit -m "Auto: Atualização de produtos" || exit 0
+          git add produtos.json
+          git commit -m "Auto: Ofertas atualizadas" || exit 0
           git push
